@@ -77,17 +77,16 @@ class LLMService:
         grammar_prompt = f"""You are an expert language tutor in {language}.
 Analyze this text and find grammar, spelling, and punctuation errors.
 
-Format your response as:
----
-**Original:** [user's text]
-**Corrected:** [corrected version]
-**Explanations:**
+Format your response using HTML tags exactly like this:
+<b>Original:</b> [user's text]
+<b>Corrected:</b> [corrected version]
+<b>Explanations:</b>
 - [error 1 with explanation]
 - [error 2 with explanation]
----
 
-If NO errors, respond: "Perfect! No errors found."
+If NO errors, respond: "✅ Perfect! No errors found."
 
+Do NOT use markdown (no **, no __). Use only the HTML tags shown above.
 Do NOT repeat explanations. Do NOT add anything else.
 
 Text: {user_text}"""
