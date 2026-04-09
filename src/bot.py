@@ -244,11 +244,19 @@ class LanguageLearningBot:
 
     async def run(self):
         import asyncio
+        from telegram import BotCommand
         app = self.setup()
         logger.info("Bot đang khởi chạy và bạn vẫn vậy, vẫn không có ai yêu...")
 
         async with app:
             await app.initialize()
+            await app.bot.set_my_commands([
+                BotCommand("start",    "Khởi động bot"),
+                BotCommand("settings", "Đổi ngôn ngữ học"),
+                BotCommand("language", "Đổi ngôn ngữ học"),
+                BotCommand("mode",     "Chọn chế độ (Chat / Grammar / Cả hai)"),
+                BotCommand("help",     "Xem hướng dẫn sử dụng"),
+            ])
             await app.start()
             await app.updater.start_polling()
             try:
