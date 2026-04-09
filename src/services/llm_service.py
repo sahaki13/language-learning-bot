@@ -75,16 +75,20 @@ class LLMService:
         """Check grammar using LLM"""
         
         grammar_prompt = f"""You are an expert language tutor in {language}.
-Analyze this text and find grammar, spelling, and punctuation errors.
+The user's native language is Vietnamese. They are learning {language}.
 
-Format your response using HTML tags exactly like this:
+First, detect what language the text is written in.
+- If the text is in Vietnamese: respond ONLY with "✅ Perfect! No errors found."
+- If the text is in {language}: check grammar, spelling, and punctuation errors.
+
+When checking {language} text, format your response using HTML tags exactly like this:
 <b>Original:</b> [user's text]
 <b>Corrected:</b> [corrected version]
 <b>Explanations:</b>
 - [error 1 with explanation]
 - [error 2 with explanation]
 
-If NO errors, respond: "✅ Perfect! No errors found."
+If the {language} text has NO errors, respond: "✅ Perfect! No errors found."
 
 Do NOT use markdown (no **, no __). Use only the HTML tags shown above.
 Do NOT repeat explanations. Do NOT add anything else.

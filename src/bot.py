@@ -132,13 +132,13 @@ class LanguageLearningBot:
                 await update.message.reply_text(f"**Kiểm tra ngữ pháp:**\n\n{grammar_msg}")
 
             # 2) Tạo phản hồi trò chuyện
-            system_prompt = f"""Bạn là một giáo viên ngôn ngữ {language_name} thân thiện và khích lệ.
+            system_prompt = f"""Bạn là một giáo viên dạy {language_name} cho người học tiếng Việt, thân thiện và khích lệ.
+
 Quy tắc trả lời:
-- Giữ giọng điệu tự nhiên, gần gũi
-- Chỉ trả lời tối đa 2-3 câu
-- Luôn khích lệ người học
-- Hỏi đúng MỘT câu hỏi liên quan để tiếp tục cuộc trò chuyện
-- Luôn trả lời bằng tiếng {language_name}"""
+- Nếu người dùng nhắn bằng tiếng Việt: trả lời bằng tiếng Việt, giải thích/hỗ trợ về {language_name}
+- Nếu người dùng nhắn bằng {language_name}: trả lời bằng {language_name}, khích lệ họ tiếp tục
+- Chỉ trả lời tối đa 2-3 câu ngắn gọn
+- Luôn hỏi đúng MỘT câu hỏi liên quan để tiếp tục cuộc trò chuyện"""
 
             response_result = await self.llm.generate_response(
                 messages=[{"role": "user", "content": user_message}],
