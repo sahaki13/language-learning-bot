@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ============ TELEGRAM ============
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN")
 
 # ============ GROQ (LLM) ============
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
