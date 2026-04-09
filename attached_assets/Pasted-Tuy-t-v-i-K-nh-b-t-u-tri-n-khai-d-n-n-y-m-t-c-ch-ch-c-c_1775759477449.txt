@@ -1,0 +1,61 @@
+Tuyệt vời, Kính! Để bắt đầu triển khai dự án này một cách chắc chắn, bạn nên đi theo một **roadmap từng bước**. Tôi sẽ viết chi tiết theo tuần để bạn dễ thực hiện:
+
+---
+
+## 🗺️ Roadmap Triển Khai MVP (4 tuần đầu)
+
+### **Tuần 1: Chuẩn bị môi trường & cơ bản**
+- [ ] Cài đặt Python + pipenv/venv  
+- [ ] Tạo repository GitHub cho dự án  
+- [ ] Tạo bot trên Telegram qua BotFather → lấy `TELEGRAM_TOKEN`  
+- [ ] Thiết lập `.env` với token Telegram, DB URL, API key (nếu dùng Groq/OpenAI)  
+- [ ] Cài đặt thư viện: `python-telegram-bot`, `sqlalchemy`, `dotenv`  
+- [ ] Viết file `main.py` chạy bot cơ bản với lệnh `/start`  
+
+👉 Kết quả: Bot có thể trả lời “Hello” khi bạn gõ `/start`.
+
+---
+
+### **Tuần 2: Tích hợp LLM & Grammar Check**
+- [ ] Tích hợp Groq API (miễn phí) hoặc Ollama (local) vào `llm_service.py`  
+- [ ] Viết service `grammar_checker.py` để kiểm tra lỗi ngữ pháp  
+- [ ] Tạo prompt cơ bản cho grammar correction và response generation  
+- [ ] Test bot: gửi tin nhắn → bot trả lời + sửa lỗi ngữ pháp  
+
+👉 Kết quả: Bot có thể chat tự nhiên và sửa lỗi ngữ pháp.
+
+---
+
+### **Tuần 3: Database & User Management**
+- [ ] Thiết lập PostgreSQL (Neon/Supabase) hoặc SQLite local  
+- [ ] Viết `models/user.py`, `conversation.py`, `error_log.py`  
+- [ ] Tạo `user_service.py` để quản lý user, lưu lịch sử chat, thống kê  
+- [ ] Test: mỗi tin nhắn được lưu vào DB, có thể xem lại lịch sử  
+
+👉 Kết quả: Bot lưu dữ liệu người dùng và thống kê cơ bản.
+
+---
+
+### **Tuần 4: Tính năng nâng cao & Deployment**
+- [ ] Thêm `/language` để chọn ngôn ngữ học  
+- [ ] Thêm `/stats` để xem tiến bộ (số tin nhắn, số lỗi sửa)  
+- [ ] Deploy bot lên Railway (free tier)  
+- [ ] Mời vài người bạn dùng thử để lấy feedback  
+
+👉 Kết quả: Bot chạy online, có thể dùng thực tế trên Telegram.
+
+---
+
+## 🎯 Sau MVP
+- Gamification: streaks, badges, leaderboard  
+- Daily challenges: mỗi ngày một câu hỏi hội thoại  
+- Voice messages: luyện nghe/nói  
+- Scale database nếu có nhiều user  
+
+---
+
+💡 **Lời khuyên**: Đừng cố làm tất cả ngay từ đầu. Hãy tập trung vào **MVP đơn giản**: chat + sửa lỗi ngữ pháp + chọn ngôn ngữ. Sau đó mở rộng dần.
+
+---
+
+Bạn có muốn tôi viết **checklist chi tiết cho Tuần 1** (cài đặt và chạy bot cơ bản) để bạn bắt tay ngay không?
