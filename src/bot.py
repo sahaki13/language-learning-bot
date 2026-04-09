@@ -1,238 +1,201 @@
+import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ChatAction
 from telegram.ext import (
     Application,
+    ApplicationBuilder,
     CommandHandler,
     MessageHandler,
     CallbackQueryHandler,
     ContextTypes,
     filters,
 )
-import logging
 
-# from src.handlers.start_handler import StartHandler
-# from src.handlers.message_handler import MessageHandler as MsgHandler
-# from src.handlers.language_handler import LanguageHandler
-from src.services.llm_service import LLMService
 from config.settings import (
     TELEGRAM_TOKEN,
     GROQ_API_KEY,
     LLM_MODEL,
     LLM_TEMPERATURE,
     MAX_TOKENS,
-    SUPPORTED_LANGUAGES
+    SUPPORTED_LANGUAGES,
 )
+from src.database.user_settings import init_db, get_language, set_language
+from src.services.llm_service import LLMService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class LanguageLearningBot:
     def __init__(self):
         self.llm = LLMService(GROQ_API_KEY, LLM_MODEL)
-        self.user_languages = {}  # {user_id: language_code}
-    
+        init_db()
+
+    def _language_keyboard(self) -> InlineKeyboardMarkup:
+        """Tạo bàn phím chọn ngôn ngữ"""
+        keyboard = [
+            [InlineKeyboardButton(name, callback_data=f"lang_{code}")]
+            for code, name in SUPPORTED_LANGUAGES.items()
+        ]
+        return InlineKeyboardMarkup(keyboard)
+
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle /start command"""
+        """Xử lý lệnh /start"""
         user = update.effective_user
-        
-        welcome_msg = f"""
-Welcome, {user.first_name}!
+        user_id = user.id
 
-I'm your AI Language Tutor Bot!
-
-**What I can do:**
-Chat with you in any language
-Correct your grammar errors
-Explain your mistakes
-Help you practice naturally
-
-**Let's get started!**
-Type /language to choose a language
-        """
-        
-        await update.message.reply_text(welcome_msg)
-        logger.info(f"User started bot: {user.first_name} (ID: {user.id})")
-    
-    async def language_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Show language selection menu"""
-        
-        # Create buttons
-        keyboard = []
-        for code, lang_name in SUPPORTED_LANGUAGES.items():
-            keyboard.append([
-                InlineKeyboardButton(lang_name, callback_data=f"lang_{code}")
-            ])
-        
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await update.message.reply_text(
-            "**Choose a language to learn:**",
-            reply_markup=reply_markup,
-            parse_mode="Markdown"
-        )
-    
-    async def language_selected(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle language selection"""
-
-        query = update.callback_query
-        await query.answer()
-        
-        # Extract language code
-        language_code = query.data.split("_")[1]
-        user_id = update.effective_user.id
-        
-        # Save user's language choice
-        self.user_languages[user_id] = language_code
-        language_name = SUPPORTED_LANGUAGES[language_code]
-        
-        # Send confirmation
-        await query.edit_message_text(
-            f"**Great!** You're learning {language_name}!\n\n"
-            f"Now just start chatting and I'll help you improve!\n\n"
-            f"Just type your message in {language_name} and I will:\n"
-            f"1️. Check your grammar\n"
-            f"2️. Reply naturally\n"
-            f"3️. Explain any mistakes",
-            parse_mode="Markdown"
-        )
-        
-        logger.info(f"User {user_id} selected language: {language_code}")
-    
-    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle user messages"""
-        
-        user_id = update.effective_user.id
-        user_message = update.message.text
-        
-        # Check if user has selected language
-        if user_id not in self.user_languages:
+        lang_code = get_language(user_id)
+        if not lang_code:
             await update.message.reply_text(
-                "Please set your learning language first!\n\n"
-                "Type /language to choose a language."
+                "Chào bạn! 👋 Mình là bot luyện ngôn ngữ.\n\n"
+                "Mình có thể hỗ trợ bạn:\n"
+                "• Sửa lỗi ngữ pháp\n"
+                "• Giải thích lỗi sai chi tiết\n"
+                "• Trò chuyện để bạn luyện tập\n\n"
+                "Bước đầu tiên: Hãy chọn ngôn ngữ bạn muốn luyện (mình sẽ nhớ cho bạn):",
+                reply_markup=self._language_keyboard(),
             )
             return
-        
-        language_code = self.user_languages[user_id]
+
+        language_name = SUPPORTED_LANGUAGES.get(lang_code, lang_code)
+        await update.message.reply_text(
+            "✅ Thiết lập đã sẵn sàng!\n\n"
+            f"Ngôn ngữ hiện tại: **{language_name}**\n\n"
+            "Bạn có thể gõ tin nhắn bất kỳ để bắt đầu luyện tập.\n"
+            "Muốn đổi ngôn ngữ khác: /settings",
+            parse_mode="Markdown"
+        )
+        logger.info("User started bot: %s (ID: %s)", user.first_name, user_id)
+
+    async def settings(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Xử lý lệnh /settings và /language"""
+        await update.message.reply_text(
+            "⚙️ Chọn ngôn ngữ bạn muốn đổi sang:",
+            reply_markup=self._language_keyboard(),
+        )
+
+    async def language_selected(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Xử lý khi người dùng chọn ngôn ngữ từ bàn phím inline"""
+        query = update.callback_query
+        await query.answer()
+
+        # Lấy mã ngôn ngữ từ callback_data
+        language_code = query.data.split("_", 1)[1]
+        user_id = update.effective_user.id
+
+        if language_code not in SUPPORTED_LANGUAGES:
+            await query.edit_message_text("❌ Ngôn ngữ không hợp lệ.")
+            return
+
+        set_language(user_id, language_code)
         language_name = SUPPORTED_LANGUAGES[language_code]
-        
-        # Show typing indicator
+
+        await query.edit_message_text(
+            "✅ Đã lưu ngôn ngữ thành công!\n\n"
+            f"Ngôn ngữ hiện tại: **{language_name}**\n\n"
+            "Giờ bạn có thể nhắn tin bình thường để luyện tập nhé.\n"
+            "Muốn đổi ngôn ngữ khác: gõ /settings",
+            parse_mode="Markdown"
+        )
+        logger.info("User %s đã chọn ngôn ngữ: %s", user_id, language_code)
+
+    async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Xử lý tin nhắn của người dùng"""
+        user_id = update.effective_user.id
+        user_message = (update.message.text or "").strip()
+
+        language_code = get_language(user_id)
+        if not language_code:
+            await update.message.reply_text(
+                "Bạn chưa chọn ngôn ngữ để luyện tập.\n\n"
+                "Hãy chọn ngôn ngữ trước nhé:",
+                reply_markup=self._language_keyboard(),
+            )
+            return
+
+        language_name = SUPPORTED_LANGUAGES.get(language_code, language_code)
+
+        # Hiển thị trạng thái đang gõ
         await context.bot.send_chat_action(
             chat_id=update.effective_chat.id,
-            action="typing"
+            action=ChatAction.TYPING,
         )
-        
-        try:
-            # Step 1: Check grammar
-            logger.info(f"Checking grammar for user {user_id}...")
-            
-            grammar_result = await self.llm.check_grammar(user_message, language_name)
-            
-            if grammar_result["success"]:
-                # Send grammar feedback
-                grammar_msg = grammar_result["content"]
-                
-                if "Perfect" not in grammar_msg:
-                    await update.message.reply_text(
-                        f"**Grammar Check:**\n\n{grammar_msg}",
-                        parse_mode="Markdown"
-                    )
-                else:
-                    logger.info(f"Grammar is perfect for user {user_id}")
-            
-            # Step 2: Generate conversational response
-            logger.info(f"Generating response for user {user_id}...")
-            
-            system_prompt = f"""You are a friendly language tutor helping someone learn {language_name}.
-Keep your responses:
-- Natural and conversational
-- 2-3 sentences
-- Encouraging and fun
-- Ask follow-up questions
 
-Respond in {language_name}."""
-            
+        try:
+            # 1) Kiểm tra ngữ pháp
+            grammar_result = await self.llm.check_grammar(user_message, language_name)
+            if grammar_result.get("success"):
+                grammar_msg = grammar_result.get("content", "")
+                # Chỉ hiển thị khi có lỗi ngữ pháp
+            grammar_msg_lower = grammar_msg.lower()
+            if "perfect" not in grammar_msg_lower and "✨" not in grammar_msg:
+                await update.message.reply_text(f"**Kiểm tra ngữ pháp:**\n\n{grammar_msg}")
+
+            # 2) Tạo phản hồi trò chuyện
+            system_prompt = f"""Bạn là một giáo viên ngôn ngữ {language_name} thân thiện và khích lệ.
+Quy tắc trả lời:
+- Giữ giọng điệu tự nhiên, gần gũi
+- Chỉ trả lời tối đa 2-3 câu
+- Luôn khích lệ người học
+- Hỏi đúng MỘT câu hỏi liên quan để tiếp tục cuộc trò chuyện
+- Luôn trả lời bằng tiếng {language_name}"""
+
             response_result = await self.llm.generate_response(
                 messages=[{"role": "user", "content": user_message}],
                 system_prompt=system_prompt,
                 temperature=LLM_TEMPERATURE,
-                max_tokens=MAX_TOKENS
+                max_tokens=MAX_TOKENS,
             )
-            
-            if response_result["success"]:
-                await update.message.reply_text(response_result["content"])
-                logger.info(f"Response sent to user {user_id}")
+
+            if response_result.get("success"):
+                await update.message.reply_text(response_result.get("content", ""))
             else:
-                await update.message.reply_text(
-                    "Sorry, I had trouble responding. Please try again."
-                )
-                logger.error(f"Response generation failed: {response_result['error']}")
-        
-        except Exception as e:
-            logger.error(f"Error handling message: {str(e)}")
-            await update.message.reply_text(
-                "An error occurred. Please try again later."
-            )
-    
+                await update.message.reply_text("Mình đang gặp lỗi khi phản hồi. Bạn thử lại sau nhé!")
+                logger.warning("LLM response failed: %s", response_result.get("error"))
+
+        except Exception:
+            logger.exception("Lỗi xử lý tin nhắn cho user %s", user_id)
+            await update.message.reply_text("Có lỗi xảy ra. Bạn thử lại sau một chút nhé.")
+
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle /help command"""
-        
-        help_msg = """
-**Commands:**
-/start - Start the bot
-/language - Choose a language
-/help - Show this help message
+        """Xử lý lệnh /help"""
+        help_text = (
+            "📌 **Các lệnh có sẵn:**\n\n"
+            "/start — Khởi động bot\n"
+            "/settings — Đổi ngôn ngữ\n"
+            "/language — Đổi ngôn ngữ (cùng chức năng)\n"
+            "/help — Xem trợ giúp này\n\n"
+            "Cách dùng:\n"
+            "1. Chọn ngôn ngữ bằng /settings\n"
+            "2. Nhắn tin bằng ngôn ngữ đó\n"
+            "3. Mình sẽ kiểm tra ngữ pháp và trả lời để bạn luyện tập."
+        )
+        await update.message.reply_text(help_text, parse_mode="Markdown")
 
-**How to use:**
-1. Choose a language with /language
-2. Type messages in that language
-3. I'll check your grammar and reply
-4. Learn by practicing!
-        """
-        
-        await update.message.reply_text(help_msg, parse_mode="Markdown")
-    
     def setup(self) -> Application:
-        """Setup bot with handlers"""
-        
-        app = Application.builder().token(TELEGRAM_TOKEN).build()
-        
-        # Command handlers
-        app.add_handler(CommandHandler("start", self.start))
-        app.add_handler(CommandHandler("language", self.language_menu))
-        app.add_handler(CommandHandler("help", self.help_command))
-        
-        # Callback handlers for buttons
-        app.add_handler(CallbackQueryHandler(
-            self.language_selected,
-            pattern="^lang_"
-        ))
-        
-        # Message handler
-        app.add_handler(MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            self.handle_message
-        ))
-        
-        return app
-    
-    async def run(self):
-        """Run the bot"""
-        import asyncio
-        app = self.setup()
-        logger.info("Bot is starting...")
+        """Thiết lập bot và đăng ký các handler"""
+        # Lưu ý: Tạm thời tắt concurrent_updates vì đang dùng SQLite (tránh lỗi database locked)
+        app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-        async with app:
-            await app.initialize()
-            await app.start()
-            await app.updater.start_polling()
-            try:
-                await asyncio.Event().wait()
-            except (KeyboardInterrupt, SystemExit):
-                pass
-            finally:
-                await app.updater.stop()
-                await app.stop()
+        app.add_handler(CommandHandler("start", self.start))
+        app.add_handler(CommandHandler("settings", self.settings))
+        app.add_handler(CommandHandler("language", self.settings))
+        app.add_handler(CommandHandler("help", self.help_command))
+
+        app.add_handler(CallbackQueryHandler(self.language_selected, pattern="^lang_"))
+
+        app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
+
+        return app
+
+    async def run(self):
+        """Khởi chạy bot"""
+        app = self.setup()
+        logger.info("🚀 Bot đang khởi động...")
+        await app.run_polling(close_loop=False)
+
 
 if __name__ == "__main__":
-    import asyncio
     bot = LanguageLearningBot()
+    import asyncio
     asyncio.run(bot.run())
