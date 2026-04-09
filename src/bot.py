@@ -47,7 +47,7 @@ class LanguageLearningBot:
         lang_code = get_language(user_id)
         if not lang_code:
             await update.message.reply_text(
-                "Chào bạn! 👋 Mình là bot luyện ngôn ngữ.\n\n"
+                "Chào bạn! Mình là bot luyện ngôn ngữ.\n\n"
                 "Mình có thể hỗ trợ bạn:\n"
                 "• Sửa lỗi ngữ pháp\n"
                 "• Giải thích lỗi sai chi tiết\n"
@@ -59,7 +59,7 @@ class LanguageLearningBot:
 
         language_name = SUPPORTED_LANGUAGES.get(lang_code, lang_code)
         await update.message.reply_text(
-            "✅ Thiết lập đã sẵn sàng!\n\n"
+            "Thiết lập đã sẵn sàng!\n\n"
             f"Ngôn ngữ hiện tại: **{language_name}**\n\n"
             "Bạn có thể gõ tin nhắn bất kỳ để bắt đầu luyện tập.\n"
             "Muốn đổi ngôn ngữ khác: /settings",
@@ -70,7 +70,7 @@ class LanguageLearningBot:
     async def settings(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Xử lý lệnh /settings và /language"""
         await update.message.reply_text(
-            "⚙️ Chọn ngôn ngữ bạn muốn đổi sang:",
+            "Chọn ngôn ngữ bạn muốn đổi sang vì hiện tại ngôn ngữ bạn quá gà:",
             reply_markup=self._language_keyboard(),
         )
 
@@ -84,14 +84,14 @@ class LanguageLearningBot:
         user_id = update.effective_user.id
 
         if language_code not in SUPPORTED_LANGUAGES:
-            await query.edit_message_text("❌ Ngôn ngữ không hợp lệ.")
+            await query.edit_message_text("Ngôn ngữ không hợp lệ.")
             return
 
         set_language(user_id, language_code)
         language_name = SUPPORTED_LANGUAGES[language_code]
 
         await query.edit_message_text(
-            "✅ Đã lưu ngôn ngữ thành công!\n\n"
+            "Đã lưu ngôn ngữ thành công!\n\n"
             f"Ngôn ngữ hiện tại: **{language_name}**\n\n"
             "Giờ bạn có thể nhắn tin bình thường để luyện tập nhé.\n"
             "Muốn đổi ngôn ngữ khác: gõ /settings",
@@ -160,7 +160,7 @@ Quy tắc trả lời:
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Xử lý lệnh /help"""
         help_text = (
-            "📌 **Các lệnh có sẵn:**\n\n"
+            "**Các lệnh có sẵn:**\n\n"
             "/start — Khởi động bot\n"
             "/settings — Đổi ngôn ngữ\n"
             "/language — Đổi ngôn ngữ (cùng chức năng)\n"
@@ -191,7 +191,7 @@ Quy tắc trả lời:
     async def run(self):
         """Khởi chạy bot"""
         app = self.setup()
-        logger.info("🚀 Bot đang khởi động...")
+        logger.info("Bot đang khởi chạy và bạn vẫn vậy, vẫn không có ai yêu...")
         await app.run_polling(close_loop=False)
 
 
