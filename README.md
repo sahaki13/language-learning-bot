@@ -91,12 +91,13 @@ Sử dụng `/stats` để xem:
 
 ### Chống Chỉ Định Tuyệt Đối:
 - Người không muốn học (bot sẽ không làm việc)
-- Những ai quá lười gõ tiếng Anh
+- Những ai quá lười gõ tiếng Anh/Nga hoặc thâm chí tiếng Việt (?)
 - Những người kỳ vọng bot có thể dạy trong 1 tuần
 - Những ai muốn bot làm bài tập về nhà thay
 - Những người mong bot sửa lỗi mà không học gì cả
 - Sử dụng spam/flood tin nhắn (máy chủ không miễn phí 💸)
 - Có người yêu (thay vì nhắn với bot sao không kiếm người mà học cùng? à làm gì có ai nên mới tìm đến bot 😏)
+- Chống chỉ định phụ nữ có thai, đang cho con bú và mẫn cảm với các thành phần của thuốc
 
 ### Chống Chỉ Định Tương Đối:
 - Sử dụng quá 8 giờ/ngày (có thể gây mệt mỏi)
