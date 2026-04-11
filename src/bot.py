@@ -170,7 +170,7 @@ class LanguageLearningBot:
             action=ChatAction.TYPING,
         )
 
-        save_message(user_id, "user", user_message)
+        save_message(user_id, "user", user_message, language_code, mode)
 
         try:
             if mode in ("chat_grammar", "grammar"):
@@ -178,9 +178,11 @@ class LanguageLearningBot:
                 if grammar_result.get("success"):
                     grammar_msg = grammar_result.get("content", "")
                     if "perfect" not in grammar_msg.lower() and "✅" not in grammar_msg:
-                        bot_reply = f"<b>Kiểm tra ngữ pháp:</b>\n\n{grammar_msg}"
-                        await update.message.reply_text(bot_reply, parse_mode="HTML")
-                        save_message(user_id, "bot", bot_reply)
+                        await update.message.reply_text(
+                            f"<b>Kiểm tra ngữ pháp:</b>\n\n{grammar_msg}",
+                            parse_mode="HTML"
+                        )
+                        save_message(user_id, "bot", grammar_msg, language_code, mode)
 
             if mode in ("chat", "chat_grammar"):
                 system_prompt = (
@@ -202,7 +204,7 @@ class LanguageLearningBot:
                 if response_result.get("success"):
                     bot_reply = response_result.get("content", "")
                     await update.message.reply_text(bot_reply)
-                    save_message(user_id, "bot", bot_reply)
+                    save_message(user_id, "bot", bot_reply, language_code, mode)
                 else:
                     await update.message.reply_text("Mình đang gặp lỗi khi phản hồi. Bạn thử lại sau nhé!")
                     logger.warning("LLM response failed: %s", response_result.get("error"))

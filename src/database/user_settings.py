@@ -15,6 +15,13 @@ def _connect():
     return conn
 
 
+def _add_column_if_missing(conn, table: str, column: str, definition: str):
+    try:
+        conn.execute(f"SELECT {column} FROM {table} LIMIT 1")
+    except sqlite3.OperationalError:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+
 def init_db() -> None:
     with _connect() as conn:
         conn.execute(
@@ -27,22 +34,24 @@ def init_db() -> None:
             )
             """
         )
-        try:
-            conn.execute("ALTER TABLE user_settings ADD COLUMN mode TEXT NOT NULL DEFAULT 'chat_grammar'")
-        except Exception:
-            pass
+        _add_column_if_missing(conn, "user_settings", "mode", "TEXT NOT NULL DEFAULT 'chat_grammar'")
 
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS messages (
-                id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id    INTEGER NOT NULL,
-                role       TEXT NOT NULL,
-                content    TEXT NOT NULL,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id       INTEGER NOT NULL,
+                role          TEXT NOT NULL,
+                content       TEXT NOT NULL,
+                language_code TEXT,
+                mode          TEXT,
+                created_at    TEXT DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
+        _add_column_if_missing(conn, "messages", "language_code", "TEXT")
+        _add_column_if_missing(conn, "messages", "mode", "TEXT")
+
         conn.commit()
 
 
@@ -87,20 +96,26 @@ def set_mode(user_id: int, mode: str) -> None:
     with _connect() as conn:
         conn.execute(
             """
-            UPDATE user_settings
-            SET mode = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = ?
+            INSERT INTO user_settings(user_id, language_code, mode)
+            VALUES(?, 'vi', ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                mode       = excluded.mode,
+                updated_at = CURRENT_TIMESTAMP
             """,
-            (mode, user_id),
+            (user_id, mode),
         )
         conn.commit()
 
 
-def save_message(user_id: int, role: str, content: str) -> None:
+def save_message(user_id: int, role: str, content: str,
+                 language_code: str = None, mode: str = None) -> None:
     with _connect() as conn:
         conn.execute(
-            "INSERT INTO messages(user_id, role, content) VALUES(?, ?, ?)",
-            (user_id, role, content),
+            """
+            INSERT INTO messages(user_id, role, content, language_code, mode)
+            VALUES(?, ?, ?, ?, ?)
+            """,
+            (user_id, role, content, language_code, mode),
         )
         conn.commit()
 
