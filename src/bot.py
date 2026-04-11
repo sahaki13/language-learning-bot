@@ -172,8 +172,28 @@ class LanguageLearningBot:
 
         save_message(user_id, "user", user_message, language_code, mode)
 
+        # Detect ngôn ngữ user đang nhắn
+        # Chỉ check grammar khi user viết bằng ngôn ngữ đang học
+        # Nếu nhắn tiếng Việt → đang hỏi/yêu cầu → chỉ chat
+        def is_target_language(text: str, lang_code: str) -> bool:
+            """Kiểm tra xem text có phải ngôn ngữ đang học không"""
+            if lang_code == "ru":
+                # Tiếng Nga có ký tự Cyrillic
+                cyrillic_count = sum(1 for c in text if '\u0400' <= c <= '\u04FF')
+                return cyrillic_count > len(text) * 0.2
+            elif lang_code == "en":
+                vietnamese_chars = set('àáâãèéêìíòóôõùúýăđơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ')
+                has_vietnamese = any(c in vietnamese_chars for c in text.lower())
+                return not has_vietnamese
+            elif lang_code == "vi":
+                # Nếu học tiếng Việt thì check grammar tiếng Việt
+                return True
+            return False
+
+        user_is_practicing = is_target_language(user_message, language_code)
+
         try:
-            if mode in ("chat_grammar", "grammar"):
+            if mode in ("chat_grammar", "grammar") and user_is_practicing:
                 grammar_result = await self.llm.check_grammar(user_message, language_name)
                 if grammar_result.get("success"):
                     grammar_msg = grammar_result.get("content", "")
