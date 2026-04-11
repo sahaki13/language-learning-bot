@@ -202,7 +202,7 @@ class LanguageLearningBot:
                             f"<b>Kiểm tra ngữ pháp:</b>\n\n{grammar_msg}",
                             parse_mode="HTML"
                         )
-                        save_message(user_id, "bot", grammar_msg, language_code, mode)
+                        save_message(user_id, "bot", grammar_msg, language_code, mode, message_type="grammar")
 
             if mode in ("chat", "chat_grammar"):
                 system_prompt = (
@@ -224,7 +224,7 @@ class LanguageLearningBot:
                 if response_result.get("success"):
                     bot_reply = response_result.get("content", "")
                     await update.message.reply_text(bot_reply)
-                    save_message(user_id, "bot", bot_reply, language_code, mode)
+                    save_message(user_id, "bot", bot_reply, language_code, mode, message_type="chat")
                 else:
                     await update.message.reply_text("Mình đang gặp lỗi khi phản hồi. Bạn thử lại sau nhé!")
                     logger.warning("LLM response failed: %s", response_result.get("error"))

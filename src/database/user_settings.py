@@ -36,6 +36,7 @@ def init_db() -> None:
                     content       TEXT NOT NULL,
                     language_code TEXT,
                     mode          TEXT,
+                    message_type  TEXT,
                     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
@@ -100,13 +101,14 @@ def set_mode(user_id: int, mode: str) -> None:
 
 
 def save_message(user_id: int, role: str, content: str,
-                 language_code: str = None, mode: str = None) -> None:
+                 language_code: str = None, mode: str = None,
+                 message_type: str = None) -> None:
     with _connect() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                INSERT INTO messages(user_id, role, content, language_code, mode)
-                VALUES(%s, %s, %s, %s, %s)
-            """, (user_id, role, content, language_code, mode))
+                INSERT INTO messages(user_id, role, content, language_code, mode, message_type)
+                VALUES(%s, %s, %s, %s, %s, %s)
+            """, (user_id, role, content, language_code, mode, message_type))
         conn.commit()
 
 
@@ -121,9 +123,8 @@ def get_stats(user_id: int) -> dict:
             total_messages = cur.fetchone()[0]
 
             cur.execute("""
-                SELECT COUNT(*) FROM messages
-                WHERE user_id = %s AND role = 'bot'
-                  AND mode IN ('grammar', 'chat_grammar')
+            SELECT COUNT(*) FROM messages
+            WHERE user_id = %s AND message_type = 'grammar'
             """, (user_id,))
             grammar_corrections = cur.fetchone()[0]
 
