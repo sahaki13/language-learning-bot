@@ -23,7 +23,7 @@ from src.database.user_settings import (
     init_db,
     get_language, set_language,
     get_mode, set_mode,
-    save_message,
+    save_message, get_stats,
 )
 from src.services.llm_service import LLMService
 
@@ -213,6 +213,40 @@ class LanguageLearningBot:
             logger.exception("Lỗi xử lý tin nhắn cho user %s", user_id)
             await update.message.reply_text("Có lỗi xảy ra. Bạn thử lại sau một chút nhé.")
 
+    async def stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user_id = update.effective_user.id
+        lang_code = get_language(user_id)
+        if not lang_code:
+            await update.message.reply_text(
+                "Bạn chưa bắt đầu học. Hãy chọn ngôn ngữ qua /settings trước nhé!"
+            )
+            return
+
+        s = get_stats(user_id)
+
+        if s["total_messages"] == 0:
+            await update.message.reply_text(
+                "Bạn chưa nhắn tin nào. Hãy bắt đầu luyện tập để xem thống kê nhé!"
+            )
+            return
+
+        lang_names = [SUPPORTED_LANGUAGES.get(lc, lc) for lc in s["languages"]]
+        lang_str = ", ".join(lang_names) if lang_names else "—"
+
+        streak_str = f"🔥 {s['streak']} ngày liên tiếp" if s["streak"] > 1 else (
+            "🌱 Hôm nay là ngày đầu tiên!" if s["streak"] == 1 else "—"
+        )
+
+        await update.message.reply_text(
+            "📊 <b>Thống kê của bạn</b>\n\n"
+            f"💬 Tin nhắn đã gửi: <b>{s['total_messages']}</b>\n"
+            f"✅ Lỗi ngữ pháp đã sửa: <b>{s['grammar_corrections']}</b>\n"
+            f"📅 Ngày học: <b>{s['active_days']}</b> ngày\n"
+            f"🌍 Ngôn ngữ đã luyện: <b>{lang_str}</b>\n"
+            f"Streak: {streak_str}",
+            parse_mode="HTML"
+        )
+
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         help_text = (
             "<b>Các lệnh có sẵn:</b>\n\n"
@@ -220,6 +254,7 @@ class LanguageLearningBot:
             "/settings — Đổi ngôn ngữ học\n"
             "/language — Đổi ngôn ngữ (cùng chức năng)\n"
             "/mode — Chọn chế độ (Chat / Grammar / Cả hai)\n"
+            "/stats — Xem thống kê tiến bộ của bạn\n"
             "/help — Xem trợ giúp này\n\n"
             "<b>Các chế độ:</b>\n"
             "💬 Chat only — Chỉ trò chuyện\n"
@@ -235,6 +270,7 @@ class LanguageLearningBot:
         app.add_handler(CommandHandler("settings", self.settings))
         app.add_handler(CommandHandler("language", self.settings))
         app.add_handler(CommandHandler("mode", self.mode_command))
+        app.add_handler(CommandHandler("stats", self.stats_command))
         app.add_handler(CommandHandler("help", self.help_command))
 
         app.add_handler(CallbackQueryHandler(self.language_selected, pattern="^lang_"))
@@ -257,6 +293,7 @@ class LanguageLearningBot:
                 BotCommand("settings", "Đổi ngôn ngữ học"),
                 BotCommand("language", "Đổi ngôn ngữ học"),
                 BotCommand("mode",     "Chọn chế độ (Chat / Grammar / Cả hai)"),
+                BotCommand("stats",    "Xem thống kê tiến bộ của bạn"),
                 BotCommand("help",     "Xem hướng dẫn sử dụng"),
             ])
             await app.start()

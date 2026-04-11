@@ -120,6 +120,63 @@ def save_message(user_id: int, role: str, content: str,
         conn.commit()
 
 
+def get_stats(user_id: int) -> dict:
+    from datetime import date, timedelta
+    with _connect() as conn:
+        total_messages = conn.execute(
+            "SELECT COUNT(*) FROM messages WHERE user_id = ? AND role = 'user'",
+            (user_id,)
+        ).fetchone()[0]
+
+        grammar_corrections = conn.execute(
+            """
+            SELECT COUNT(*) FROM messages
+            WHERE user_id = ? AND role = 'bot'
+              AND mode IN ('grammar', 'chat_grammar')
+            """,
+            (user_id,)
+        ).fetchone()[0]
+
+        languages = conn.execute(
+            """
+            SELECT DISTINCT language_code FROM messages
+            WHERE user_id = ? AND role = 'user' AND language_code IS NOT NULL
+            """,
+            (user_id,)
+        ).fetchall()
+        languages = [r[0] for r in languages]
+
+        active_dates = conn.execute(
+            """
+            SELECT DISTINCT DATE(created_at) as d FROM messages
+            WHERE user_id = ? AND role = 'user'
+            ORDER BY d DESC
+            """,
+            (user_id,)
+        ).fetchall()
+        active_dates = [r[0] for r in active_dates]
+
+    streak = 0
+    if active_dates:
+        today = date.today()
+        check = today
+        for d_str in active_dates:
+            d = date.fromisoformat(d_str)
+            if d == check or d == check - timedelta(days=1):
+                streak += 1
+                check = d
+            else:
+                break
+
+    return {
+        "total_messages":      total_messages,
+        "grammar_corrections": grammar_corrections,
+        "languages":           languages,
+        "streak":              streak,
+        "active_days":         len(active_dates),
+    }
+
+
 def get_recent_messages(user_id: int, limit: int = 10) -> list:
     with _connect() as conn:
         cur = conn.execute(
