@@ -230,12 +230,19 @@ class LanguageLearningBot:
             )
             return
 
-        lang_names = [SUPPORTED_LANGUAGES.get(lc, lc) for lc in s["languages"]]
-        lang_str = ", ".join(lang_names) if lang_names else "—"
+        # Fallback: nếu chưa có language trong messages, dùng ngôn ngữ hiện tại
+        if s["languages"]:
+            lang_names = [SUPPORTED_LANGUAGES.get(lc, lc) for lc in s["languages"]]
+            lang_str = ", ".join(lang_names)
+        else:
+            lang_str = SUPPORTED_LANGUAGES.get(lang_code, lang_code)
 
-        streak_str = f"🔥 {s['streak']} ngày liên tiếp" if s["streak"] > 1 else (
-            "🌱 Hôm nay là ngày đầu tiên!" if s["streak"] == 1 else "—"
-        )
+        if s["streak"] > 1:
+            streak_str = f"🔥 {s['streak']} ngày liên tiếp"
+        elif s["streak"] == 1:
+            streak_str = "🌱 Hôm nay là ngày đầu tiên!"
+        else:
+            streak_str = "💤 Chưa có streak — luyện tập ngay để bắt đầu!"
 
         await update.message.reply_text(
             "📊 <b>Thống kê của bạn</b>\n\n"
@@ -243,7 +250,7 @@ class LanguageLearningBot:
             f"✅ Lỗi ngữ pháp đã sửa: <b>{s['grammar_corrections']}</b>\n"
             f"📅 Ngày học: <b>{s['active_days']}</b> ngày\n"
             f"🌍 Ngôn ngữ đã luyện: <b>{lang_str}</b>\n"
-            f"Streak: {streak_str}",
+            f"🔥 Streak: {streak_str}",
             parse_mode="HTML"
         )
 
