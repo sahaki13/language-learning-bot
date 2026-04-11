@@ -25,6 +25,8 @@ Bot Telegram có sử dụng AI hỗ trợ để học Tiếng Việt, Tiếng N
 | `/settings` | Đổi ngôn ngữ |
 | `/mode` | Chọn chế độ học |
 | `/stats` | Xem tiến bộ & thống kê |
+| `/language` | Đổi ngôn ngữ muốn học |
+| `/help` | Nhận sự giúp đỡ |
 
 ---
 
@@ -216,6 +218,8 @@ AI-powered Telegram bot for learning Vietnamese, Russian, and English with gramm
 | `/settings` | Change language |
 | `/mode` | Choose learning mode |
 | `/stats` | View your progress & stats |
+| `/language` | Change the language you want to learn |
+| `/help` | Get help |
 
 ---
 
