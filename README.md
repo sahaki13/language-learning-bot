@@ -87,6 +87,32 @@ Sử dụng `/stats` để xem:
 
 ---
 
+## ⚠️ Chống Chỉ Định
+
+### Chống Chỉ Định Tuyệt Đối:
+- Người không muốn học (bot sẽ không làm việc)
+- Những ai quá lười gõ tiếng Anh
+- Những người kỳ vọng bot có thể dạy trong 1 tuần
+- Những ai muốn bot làm bài tập về nhà thay
+- Những người mong bot sửa lỗi mà không học gì cả
+- Sử dụng spam/flood tin nhắn (máy chủ không miễn phí 💸)
+- Có người yêu (thay vì nhắn với bot sao không kiếm người mà học cùng? à làm gì có ai nên mới tìm đến bot 😏)
+
+### Chống Chỉ Định Tương Đối:
+- Sử dụng quá 8 giờ/ngày (có thể gây mệt mỏi)
+- Kỳ vọng bot là người bạn thân (nó là bot, không phải người)
+- Muốn bot hiểu được meme/slang Việt (bot chưa thông minh như vậy)
+
+### Tác Dụng Phụ Có Thể Xảy Ra:
+- Tự ý nhận ra ngoại ngữ của bạn tệ hơn tưởng
+- Có thể sẽ muốn học thêm ngôn ngữ khác
+- Bực tức vì bot không hiểu slang của bạn
+
+### Lưu Ý:
+Nếu bạn gặp lỗi, **đó là lỗi của bạn, không phải bot**. Bot rất thông minh, có thể là bạn đánh máy sai? 😏
+
+---
+
 ## Lộ Trình Công Khai - Bình Chọn Tính Năng
 
 Chúng tôi phát triển tính năng dựa trên **những gì BẠN muốn!**
