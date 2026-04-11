@@ -84,11 +84,18 @@ def set_mode(user_id: int, mode: str) -> None:
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO user_settings(user_id, language_code, mode)
-                VALUES(%s, 'vi', %s)
+                VALUES(
+                    %s,
+                    COALESCE(
+                        (SELECT language_code FROM user_settings WHERE user_id = %s),
+                        'vi'
+                    ),
+                    %s
+                )
                 ON CONFLICT(user_id) DO UPDATE SET
                     mode       = EXCLUDED.mode,
                     updated_at = CURRENT_TIMESTAMP
-            """, (user_id, mode))
+            """, (user_id, user_id, mode))
         conn.commit()
 
 
